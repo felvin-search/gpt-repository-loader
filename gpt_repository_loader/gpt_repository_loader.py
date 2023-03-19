@@ -33,12 +33,15 @@ def process_repository(repo_path, ignore_list, output_stream):
                 output_stream.write(f"{contents}\n")
 
 def git_repo_to_text(repo_path, preamble_file=None):
-    ignore_file_path = os.path.join(repo_path, ".gptignore")
-
-    if os.path.exists(ignore_file_path):
-        ignore_list = get_ignore_list(ignore_file_path)
-    else:
-        ignore_list = []
+    gpt_ignore_path = os.path.join(repo_path, ".gptignore")
+    git_ignore_path = os.path.join(repo_path, ".gitignore")
+    
+    ignore_list = ['.git/', '/.git/', '.git', '.git/*', '.gptignore', '.gitignore']
+    
+    if os.path.exists(gpt_ignore_path):
+        ignore_list += get_ignore_list(gpt_ignore_path)
+    elif os.path.exists(git_ignore_path):
+        ignore_list += get_ignore_list(git_ignore_path)
 
     output_stream = io.StringIO()
 
@@ -54,6 +57,7 @@ def git_repo_to_text(repo_path, preamble_file=None):
     output_stream.write("--END--")
 
     return output_stream.getvalue()
+
 
 def main():
     if len(sys.argv) < 2:
