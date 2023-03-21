@@ -6,13 +6,6 @@ import fnmatch
 import pyperclip
 import io
 
-def get_ignore_list(ignore_file_path):
-    ignore_list = []
-    with open(ignore_file_path, 'r') as ignore_file:
-        for line in ignore_file:
-            ignore_list.append(line.strip())
-    return ignore_list
-
 def should_ignore(file_path, ignore_list):
     for pattern in ignore_list:
         if fnmatch.fnmatch(file_path, pattern):
@@ -32,16 +25,35 @@ def process_repository(repo_path, ignore_list, output_stream):
                 output_stream.write(f"{relative_file_path}\n")
                 output_stream.write(f"{contents}\n")
 
-def git_repo_to_text(repo_path, preamble_file=None):
+def get_ignore_list(repo_path):
+    ignore_list = []
+    ignore_file_path = None
+
     gpt_ignore_path = os.path.join(repo_path, ".gptignore")
     git_ignore_path = os.path.join(repo_path, ".gitignore")
-    
-    ignore_list = ['.git/', '/.git/', '.git', '.git/*', '.gptignore', '.gitignore']
-    
+
     if os.path.exists(gpt_ignore_path):
-        ignore_list += get_ignore_list(gpt_ignore_path)
+        ignore_file_path = gpt_ignore_path
     elif os.path.exists(git_ignore_path):
-        ignore_list += get_ignore_list(git_ignore_path)
+        ignore_file_path = git_ignore_path
+    else:
+        print("No ignore file present")
+
+    if ignore_file_path:
+        with open(ignore_file_path, 'r') as ignore_file:
+            for line in ignore_file:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                ignore_list.append(line)
+
+    default_ignore_list = ['.git/', '/.git/', '.git', '.git/*', '.gptignore', '.gitignore', 'node_modules', 'node_modules/*']
+    ignore_list += default_ignore_list
+
+    return ignore_list
+
+def git_repo_to_text(repo_path, preamble_file=None):
+    ignore_list = get_ignore_list(repo_path)
 
     output_stream = io.StringIO()
 
@@ -57,7 +69,6 @@ def git_repo_to_text(repo_path, preamble_file=None):
     output_stream.write("--END--")
 
     return output_stream.getvalue()
-
 
 def main():
     if len(sys.argv) < 2:
@@ -78,6 +89,24 @@ def main():
     if "-c" in sys.argv:
         pyperclip.copy(repo_as_text)
         print("Repository contents copied to clipboard.")
+
+
+def print_directory_structure(repo_path, indent=0, max_depth=2, ignore_list=None):
+    if ignore_list is None:
+        ignore_list = get_ignore_list(repo_path)
+
+    if indent <= max_depth:
+        for item in os.listdir(repo_path):
+            full_path = os.path.join(repo_path, item)
+            if os.path.isdir(full_path):
+                if should_ignore(full_path, ignore_list) or should_ignore(item, ignore_list):
+                    continue
+                print("|  " * indent + "|--" + item + "/")
+                print_directory_structure(full_path, indent + 1, max_depth, ignore_list)
+            else:
+                if should_ignore(full_path, ignore_list) or should_ignore(item, ignore_list):
+                    continue
+                print("|  " * indent + "|--" + item)
 
 if __name__ == "__main__":
     main()
