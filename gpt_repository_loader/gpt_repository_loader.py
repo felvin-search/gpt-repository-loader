@@ -47,7 +47,7 @@ def get_ignore_list(repo_path):
                     continue
                 ignore_list.append(line)
 
-    default_ignore_list = ['.git/', '/.git/', '.git', '.git/*', '.gptignore', '.gitignore', 'node_modules', 'node_modules/*']
+    default_ignore_list = ['.git/', '/.git/', '.git', '.git/*', '.gptignore', '.gitignore', 'node_modules', 'node_modules/*', '__pycache__', '__pycache__/*']
     ignore_list += default_ignore_list
 
     return ignore_list
