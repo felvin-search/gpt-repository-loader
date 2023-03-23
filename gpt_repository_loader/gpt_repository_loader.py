@@ -12,19 +12,6 @@ def should_ignore(file_path, ignore_list):
             return True
     return False
 
-def process_repository(repo_path, ignore_list, output_stream):
-    for root, _, files in os.walk(repo_path):
-        for file in files:
-            file_path = os.path.join(root, file)
-            relative_file_path = os.path.relpath(file_path, repo_path)
-
-            if not should_ignore(relative_file_path, ignore_list):
-                with open(file_path, 'r', errors='ignore') as file:
-                    contents = file.read()
-                output_stream.write("-" * 4 + "\n")
-                output_stream.write(f"{relative_file_path}\n")
-                output_stream.write(f"{contents}\n")
-
 def get_ignore_list(repo_path):
     ignore_list = []
     ignore_file_path = None
@@ -47,10 +34,24 @@ def get_ignore_list(repo_path):
                     continue
                 ignore_list.append(line)
 
-    default_ignore_list = ['.git/', '/.git/', '.git', '.git/*', '.gptignore', '.gitignore', 'node_modules', 'node_modules/*', '__pycache__', '__pycache__/*']
+    default_ignore_list = ['dist', 'dist/','dist/*','sdist', 'sdist/','sdist/*' '.git/', '/.git/', '.git', '.git/*', '.gptignore', '.gitignore', 'node_modules', 'node_modules/*', '__pycache__', '__pycache__/*']
     ignore_list += default_ignore_list
 
     return ignore_list
+
+def process_repository(repo_path, ignore_list, output_stream):
+    for root, _, files in os.walk(repo_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+            relative_file_path = os.path.relpath(file_path, repo_path)
+
+            if not should_ignore(relative_file_path, ignore_list):
+                with open(file_path, 'r', errors='ignore') as file:
+                    contents = file.read()
+                output_stream.write("-" * 4 + "\n")
+                output_stream.write(f"{relative_file_path}\n")
+                output_stream.write(f"{contents}\n")
+
 
 def git_repo_to_text(repo_path, preamble_file=None):
     ignore_list = get_ignore_list(repo_path)
