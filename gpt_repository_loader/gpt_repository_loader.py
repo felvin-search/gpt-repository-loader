@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import os
-import sys
+import argparse
 import fnmatch
 import pyperclip
 import io
@@ -72,22 +72,19 @@ def git_repo_to_text(repo_path, preamble_file=None):
     return output_stream.getvalue()
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python git_to_text.py /path/to/git/repository [-p /path/to/preamble.txt]")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Convert a Git repository to text.")
+    parser.add_argument("repo_path", help="Path to the Git repository.")
+    parser.add_argument("-p", "--preamble", help="Path to a preamble file.")
+    parser.add_argument("-c", "--copy", action="store_true", help="Copy the repository contents to clipboard.")
+    args = parser.parse_args()
 
-    repo_path = sys.argv[1]
-    preamble_file = None
-    if "-p" in sys.argv:
-        preamble_file = sys.argv[sys.argv.index("-p") + 1]
-
-    repo_as_text = git_repo_to_text(repo_path, preamble_file)
+    repo_as_text = git_repo_to_text(args.repo_path, args.preamble)
 
     with open('output.txt', 'w') as output_file:
         output_file.write(repo_as_text)
     print("Repository contents written to output.txt.")
 
-    if "-c" in sys.argv:
+    if args.copy:
         pyperclip.copy(repo_as_text)
         print("Repository contents copied to clipboard.")
 
