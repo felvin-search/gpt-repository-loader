@@ -80,13 +80,13 @@ def main():
 
     repo_as_text = git_repo_to_text(args.repo_path, args.preamble)
 
-    with open('output.txt', 'w') as output_file:
-        output_file.write(repo_as_text)
-    print("Repository contents written to output.txt.")
-
     if args.copy:
         pyperclip.copy(repo_as_text)
         print("Repository contents copied to clipboard.")
+    else:
+        with open('output.txt', 'w') as output_file:
+            output_file.write(repo_as_text)
+            print("Repository contents written to output.txt.")
 
 
 def print_directory_structure(repo_path, indent=0, max_depth=2, ignore_list=None):
