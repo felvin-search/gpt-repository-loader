@@ -5,6 +5,7 @@ import argparse
 import fnmatch
 import pyperclip
 import io
+import subprocess
 
 def should_ignore(file_path, ignore_list):
     for pattern in ignore_list:
@@ -40,17 +41,16 @@ def get_ignore_list(repo_path):
     return ignore_list
 
 def process_repository(repo_path, ignore_list, output_stream):
-    for root, _, files in os.walk(repo_path):
-        for file in files:
-            file_path = os.path.join(root, file)
-            relative_file_path = os.path.relpath(file_path, repo_path)
+    git_files = subprocess.check_output(["git", "ls-files"], cwd=repo_path, universal_newlines=True).splitlines()
 
-            if not should_ignore(relative_file_path, ignore_list):
-                with open(file_path, 'r', errors='ignore') as file:
-                    contents = file.read()
-                output_stream.write("-" * 4 + "\n")
-                output_stream.write(f"{relative_file_path}\n")
-                output_stream.write(f"{contents}\n")
+    for file_path in git_files:
+        if not should_ignore(file_path, ignore_list):
+            full_path = os.path.join(repo_path, file_path)
+            with open(full_path, 'r', errors='ignore') as file:
+                contents = file.read()
+            output_stream.write("-" * 4 + "\n")
+            output_stream.write(f"{file_path}\n")
+            output_stream.write(f"{contents}\n")
 
 
 def git_repo_to_text(repo_path, preamble_file=None):
