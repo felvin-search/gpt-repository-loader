@@ -51,11 +51,14 @@ def process_repository(repo_path, ignore_list, output_stream):
     for file_path in git_files:
         if not should_ignore(file_path, ignore_list):
             full_path = os.path.join(repo_path, file_path)
-            with open(full_path, 'r', errors='ignore') as file:
-                contents = file.read()
-            output_stream.write("-" * 4 + "\n")
-            output_stream.write(f"{file_path}\n")
-            output_stream.write(f"{contents}\n")
+            try:
+                with open(full_path, 'r', errors='ignore') as file:
+                    contents = file.read()
+                output_stream.write("-" * 4 + "\n")
+                output_stream.write(f"{file_path}\n")
+                output_stream.write(f"{contents}\n")
+            except FileNotFoundError:
+                print(f"Warning: File not found: {file_path}")
 
 
 
