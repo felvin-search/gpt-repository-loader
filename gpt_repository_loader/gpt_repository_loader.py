@@ -6,6 +6,8 @@ import fnmatch
 import pyperclip
 import io
 import subprocess
+from token_count import TokenCount
+tc = TokenCount(model_name="gpt-3.5-turbo")
 
 def should_ignore(file_path, ignore_list):
     for pattern in ignore_list:
@@ -56,6 +58,7 @@ def process_repository(repo_path, ignore_list, output_stream):
             output_stream.write(f"{contents}\n")
 
 
+
 def git_repo_to_text(repo_path, preamble_file=None):
     ignore_list = get_ignore_list(repo_path)
 
@@ -82,14 +85,15 @@ def main():
     args = parser.parse_args()
 
     repo_as_text = git_repo_to_text(args.repo_path, args.preamble)
+    num_tokens = tc.num_tokens_from_string(repo_as_text)
 
     if args.copy:
         pyperclip.copy(repo_as_text)
-        print("Repository contents copied to clipboard.")
+        print(f"Repository contents copied to clipboard. Number of GPT tokens: {num_tokens}")
     else:
         with open('output.txt', 'w') as output_file:
             output_file.write(repo_as_text)
-            print("Repository contents written to output.txt.")
+            print(f"Repository contents written to output.txt. Number of GPT tokens: {num_tokens}")
 
 
 def print_directory_structure(repo_path, indent=0, max_depth=2, ignore_list=None):
