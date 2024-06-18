@@ -59,6 +59,8 @@ def process_repository(repo_path, ignore_list, output_stream):
                 output_stream.write(f"{contents}\n")
             except FileNotFoundError:
                 print(f"Warning: File not found: {file_path}")
+            except Exception as e:
+                print(f"Error reading file {file_path}: {str(e)}")
 
 
 
