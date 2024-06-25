@@ -15,7 +15,7 @@ def should_ignore(file_path, ignore_list):
             return True
     return False
 
-def get_ignore_list(repo_path):
+def get_ignore_list(repo_path, ignore_js_ts_config=False):
     ignore_list = []
     ignore_file_path = None
 
@@ -41,7 +41,12 @@ def get_ignore_list(repo_path):
     image_ignore_list = ['*.png', '*.jpg', '*.jpeg', '*.gif', '*.bmp', '*.ico', '*.cur', '*.tiff', '*.webp', '*.avif']
     video_ignore_list = ['*.mp4', '*.mov', '*.wmv', '*.avi', '*.mkv', '*.flv', '*.webm', '*.mp3', '*.wav', '*.aac', '*.m4a', '*.mpa', '*.mpeg', '*.mpe', '*.mpg', '*.mpi', '*.mpt', '*.mpx', '*.ogv', '*.webm', '*.wmv', '*.yuv']
     audio_ignore_list = ['*.mp3', '*.wav', '*.aac', '*.m4a', '*.mpa', '*.mpeg', '*.mpe', '*.mpg', '*.mpi', '*.mpt', '*.mpx', '*.ogv', '*.webm', '*.wmv', '*.yuv']
+    js_ts_config_ignore_list = ['*.babelrc', '*.babel.config.js', '*.tsconfig.json', '*.tslint.json', '*.eslintrc', '*.prettierrc', '*.webpack.config.js', '*.rollup.config.js']
+    
     ignore_list += default_ignore_list + image_ignore_list + video_ignore_list + audio_ignore_list
+    
+    if ignore_js_ts_config:
+        ignore_list += js_ts_config_ignore_list
 
     return ignore_list
 
@@ -64,8 +69,8 @@ def process_repository(repo_path, ignore_list, output_stream):
 
 
 
-def git_repo_to_text(repo_path, preamble_file=None):
-    ignore_list = get_ignore_list(repo_path)
+def git_repo_to_text(repo_path, preamble_file=None, ignore_js_ts_config=False):
+    ignore_list = get_ignore_list(repo_path, ignore_js_ts_config)
 
     output_stream = io.StringIO()
 
@@ -87,9 +92,10 @@ def main():
     parser.add_argument("repo_path", help="Path to the Git repository.")
     parser.add_argument("-p", "--preamble", help="Path to a preamble file.")
     parser.add_argument("-c", "--copy", action="store_true", help="Copy the repository contents to clipboard.")
+    parser.add_argument("--ignore-js-ts-config", action="store_true", help="Ignore JavaScript and TypeScript config files.")
     args = parser.parse_args()
 
-    repo_as_text = git_repo_to_text(args.repo_path, args.preamble)
+    repo_as_text = git_repo_to_text(args.repo_path, args.preamble, args.ignore_js_ts_config)
     num_tokens = tc.num_tokens_from_string(repo_as_text)
 
     if args.copy:
