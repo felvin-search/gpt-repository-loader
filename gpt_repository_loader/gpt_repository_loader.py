@@ -15,7 +15,7 @@ def should_ignore(file_path, ignore_list):
             return True
     return False
 
-def get_ignore_list(repo_path, ignore_js_ts_config=False):
+def get_ignore_list(repo_path, ignore_js_ts_config=True):
     ignore_list = []
     ignore_file_path = None
 
@@ -69,7 +69,7 @@ def process_repository(repo_path, ignore_list, output_stream):
 
 
 
-def git_repo_to_text(repo_path, preamble_file=None, ignore_js_ts_config=False):
+def git_repo_to_text(repo_path, preamble_file=None, ignore_js_ts_config=True):
     ignore_list = get_ignore_list(repo_path, ignore_js_ts_config)
 
     output_stream = io.StringIO()
@@ -92,7 +92,7 @@ def main():
     parser.add_argument("repo_path", help="Path to the Git repository.")
     parser.add_argument("-p", "--preamble", help="Path to a preamble file.")
     parser.add_argument("-c", "--copy", action="store_true", help="Copy the repository contents to clipboard.")
-    parser.add_argument("--ignore-js-ts-config", action="store_true", help="Ignore JavaScript and TypeScript config files.")
+    parser.add_argument("--include-js-ts-config", action="store_false", dest="ignore_js_ts_config", help="Include JavaScript and TypeScript config files.")
     args = parser.parse_args()
 
     repo_as_text = git_repo_to_text(args.repo_path, args.preamble, args.ignore_js_ts_config)
