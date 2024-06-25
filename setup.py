@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="gpt-repository-loader",
-    version="0.9.5",
+    version="0.9.6",
     author="Felvin",
     author_email="team@felvin.com",
     description="A utility to convert a Git repository into a text representation.",
