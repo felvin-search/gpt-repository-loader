@@ -15,7 +15,7 @@ def should_ignore(file_path, ignore_list):
             return True
     return False
 
-def get_ignore_list(repo_path, ignore_js_ts_config=True):
+def get_ignore_list(repo_path, ignore_js_ts_config=True, additional_ignores=None):
     ignore_list = []
     ignore_file_path = None
 
@@ -36,6 +36,9 @@ def get_ignore_list(repo_path, ignore_js_ts_config=True):
                 if not line or line.startswith("#"):
                     continue
                 ignore_list.append(line)
+
+    if additional_ignores:
+        ignore_list.extend(additional_ignores)
 
     default_ignore_list = ['dist', 'dist/','dist/*','sdist', 'sdist/','sdist/*' '.git/', '/.git/', '.git', '.git/*', '.gptignore', '.gitignore', 'node_modules', 'node_modules/*', '__pycache__', '__pycache__/*', 'package-lock.json', 'yarn.lock', 'yarn-error.log']
     image_ignore_list = ['*.png', '*.jpg', '*.jpeg', '*.gif', '*.bmp', '*.ico', '*.cur', '*.tiff', '*.webp', '*.avif']
@@ -69,8 +72,9 @@ def process_repository(repo_path, ignore_list, output_stream):
 
 
 
-def git_repo_to_text(repo_path, preamble_file=None, ignore_js_ts_config=True):
-    ignore_list = get_ignore_list(repo_path, ignore_js_ts_config)
+def git_repo_to_text(repo_path, preamble_file=None, ignore_list=None):
+    if ignore_list is None:
+        ignore_list = get_ignore_list(repo_path)
 
     output_stream = io.StringIO()
 
@@ -93,9 +97,11 @@ def main():
     parser.add_argument("-p", "--preamble", help="Path to a preamble file.")
     parser.add_argument("-c", "--copy", action="store_true", help="Copy the repository contents to clipboard.")
     parser.add_argument("--include-js-ts-config", action="store_false", dest="ignore_js_ts_config", help="Include JavaScript and TypeScript config files.")
+    parser.add_argument("-i", "--ignore", nargs="+", help="Additional file paths or patterns to ignore.")
     args = parser.parse_args()
 
-    repo_as_text = git_repo_to_text(args.repo_path, args.preamble, args.ignore_js_ts_config)
+    ignore_list = get_ignore_list(args.repo_path, args.ignore_js_ts_config, args.ignore)
+    repo_as_text = git_repo_to_text(args.repo_path, args.preamble, ignore_list)
     num_tokens = tc.num_tokens_from_string(repo_as_text)
 
     if args.copy:
