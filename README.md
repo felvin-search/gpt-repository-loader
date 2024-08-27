@@ -24,6 +24,7 @@ This will copy ALL the git tracked content in the repository on clipboard and th
 * `-c`, `--copy`: Copies the repository contents to the clipboard. If not provided, the output will be written to a file named `output.txt` in the current directory.
 * `-i`, `--ignore`: Additional file paths or patterns to ignore. You can specify multiple paths or patterns.
 * `--include-js-ts-config`: Include JavaScript and TypeScript config files (which are ignored by default).
+* `-l`, `--list`: List all files with their token counts.
 
 ### Examples
 ```bash
@@ -32,6 +33,9 @@ gpt-repository-loader . -c -i "*.log" "temp_files/" "config.ini"
 
 # Include JS/TS config files and ignore a specific directory
 gpt-repository-loader . --include-js-ts-config -i "node_modules/"
+
+# List all files with their token counts
+gpt-repository-loader . -l
 ```
 
 ## What to use it for?
