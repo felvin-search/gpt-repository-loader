@@ -89,8 +89,12 @@ def process_repository(repo_path, ignore_list, output_stream, list_files=False):
     for file_path in files_to_process:
         contents = read_file_contents(repo_path, file_path)
         if contents is not None:
-            file_tokens = tc.num_tokens_from_string(contents)
-            total_tokens += file_tokens
+            try:
+                file_tokens = tc.num_tokens_from_string(contents)
+                total_tokens += file_tokens
+            except Exception as e:
+                print(f"Error counting tokens for {file_path}")
+                file_tokens = 0
 
             if list_files:
                 print(f"{file_path}: {file_tokens} tokens")
