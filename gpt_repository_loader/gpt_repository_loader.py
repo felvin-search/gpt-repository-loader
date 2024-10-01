@@ -48,7 +48,7 @@ def get_ignore_list(repo_path, ignore_js_ts_config=True, additional_ignores=None
         ignore_list.extend(additional_ignores)
 
     default_ignore_list = ['dist', 'dist/','dist/*','sdist', 'sdist/','sdist/*' '.git/', '/.git/', '.git', '.git/*', '.gptignore', '.gitignore', 'node_modules', 'node_modules/*', '__pycache__', '__pycache__/*', '**/package-lock.json', '**/yarn.lock', '**/yarn-error.log', '**/pnpm-lock.yaml']
-    image_ignore_list = ['*.png', '*.jpg', '*.jpeg', '*.gif', '*.bmp', '*.ico', '*.cur', '*.tiff', '*.webp', '*.avif']
+    image_ignore_list = ['*.png', '*.jpg', '*.jpeg', '*.gif', '*.bmp', '*.ico', '*.cur', '*.tiff', '*.webp', '*.avif', "*.svg", "*.icns", "*.heic"]
     video_ignore_list = ['*.mp4', '*.mov', '*.wmv', '*.avi', '*.mkv', '*.flv', '*.webm', '*.mp3', '*.wav', '*.aac', '*.m4a', '*.mpa', '*.mpeg', '*.mpe', '*.mpg', '*.mpi', '*.mpt', '*.mpx', '*.ogv', '*.webm', '*.wmv', '*.yuv']
     audio_ignore_list = ['*.mp3', '*.wav', '*.aac', '*.m4a', '*.mpa', '*.mpeg', '*.mpe', '*.mpg', '*.mpi', '*.mpt', '*.mpx', '*.ogv', '*.webm', '*.wmv', '*.yuv']
     js_ts_config_ignore_list = ['**/tailwind.config.js','**/*.babelrc', '**/.babelrc', '**/*.babel.config.js', '**/*.tsconfig.json', '**/tsconfig.json', '**/*.tslint.json', '**/tslint.json', '**/*.eslintrc', '**/*.prettierrc', '**/*.webpack.config.js', '**/*.rollup.config.js']
