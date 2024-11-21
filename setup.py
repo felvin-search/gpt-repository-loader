@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="gpt-repository-loader",
-    version="0.9.11",
+    version="0.9.12",
     author="Felvin",
     author_email="team@felvin.com",
     description="A utility to convert a Git repository into a text representation.",
@@ -27,7 +27,7 @@ setup(
         "Programming Language :: Python :: 3.9",
     ],
     python_requires=">=3.6",
-    install_requires=["pyperclip"],
+    install_requires=["pyperclip", "token_count"],
     entry_points={
         "console_scripts": [
             "gpt-repository-loader=gpt_repository_loader:main",
