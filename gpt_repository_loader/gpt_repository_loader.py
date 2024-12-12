@@ -6,7 +6,9 @@ import fnmatch
 import pyperclip
 import io
 import subprocess
+import textwrap
 from token_count import TokenCount
+from tabulate import tabulate
 tc = TokenCount(model_name="gpt-3.5-turbo")
 
 def should_ignore(file_path, ignore_patterns):
@@ -102,10 +104,21 @@ def process_repository(repo_path, ignore_list, output_stream, list_files=False):
     # Sort by token count in descending order
     file_token_pairs.sort(key=lambda x: x[1], reverse=True)
 
-    for file_path, file_tokens, contents in file_token_pairs:
-        if list_files:
-            print(f"{file_path}: {file_tokens} tokens")
+    if list_files:
+        # Prepare table data with wrapped paths
+        table_data = []
+        for file_path, file_tokens, _ in file_token_pairs:
+            wrapped_path = '\n'.join(textwrap.wrap(file_path, width=80))
+            table_data.append([wrapped_path, file_tokens])
+        
+        # Print formatted table
+        print(tabulate(table_data, 
+                      headers=['File Path', 'Tokens'],
+                      tablefmt='grid',
+                      colalign=('left', 'right')))
+        print(f"\nTotal tokens: {total_tokens}")
 
+    for file_path, file_tokens, contents in file_token_pairs:
         output_stream.write("-" * 4 + "\n")
         output_stream.write(f"{file_path}\n")
         output_stream.write(f"{contents}\n")
