@@ -52,6 +52,7 @@ def get_ignore_list(repo_path, ignore_js_ts_config=True, additional_ignores=None
     video_ignore_list = ['*.mp4', '*.mov', '*.wmv', '*.avi', '*.mkv', '*.flv', '*.webm', '*.mp3', '*.wav', '*.aac', '*.m4a', '*.mpa', '*.mpeg', '*.mpe', '*.mpg', '*.mpi', '*.mpt', '*.mpx', '*.ogv', '*.webm', '*.wmv', '*.yuv']
     audio_ignore_list = ['*.mp3', '*.wav', '*.aac', '*.m4a', '*.mpa', '*.mpeg', '*.mpe', '*.mpg', '*.mpi', '*.mpt', '*.mpx', '*.ogv', '*.webm', '*.wmv', '*.yuv']
     js_ts_config_ignore_list = ['**/tailwind.config.js','**/*.babelrc', '**/.babelrc', '**/*.babel.config.js', '**/*.tsconfig.json', '**/tsconfig.json', '**/*.tslint.json', '**/tslint.json', '**/*.eslintrc', '**/*.prettierrc', '**/*.webpack.config.js', '**/*.rollup.config.js']
+    misc_ignore_list = ['**/.DS_Store', '**/.DS_Store/*']
 
     build_ignore_list = ['**/build/', '**/dist/']
     egg_info_ignore_list = ['**/*.egg-info']
@@ -59,7 +60,7 @@ def get_ignore_list(repo_path, ignore_js_ts_config=True, additional_ignores=None
     env_ignore_list = ['**/.env', '**/.env.*']
     test_ignore_list = ['**/test', '**/tests', '**/__tests__', '**/__test__']
 
-    ignore_list += default_ignore_list + image_ignore_list + video_ignore_list + audio_ignore_list + build_ignore_list + egg_info_ignore_list + compiled_python_ignore_list + env_ignore_list + test_ignore_list
+    ignore_list += default_ignore_list + image_ignore_list + video_ignore_list + audio_ignore_list + build_ignore_list + egg_info_ignore_list + compiled_python_ignore_list + env_ignore_list + test_ignore_list + misc_ignore_list
 
 
     if ignore_js_ts_config:
