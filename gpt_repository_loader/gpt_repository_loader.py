@@ -86,6 +86,7 @@ def read_file_contents(repo_path, file_path):
 def process_repository(repo_path, ignore_list, output_stream, list_files=False):
     files_to_process = get_files_to_process(repo_path, ignore_list)
     total_tokens = 0
+    file_token_pairs = []
 
     for file_path in files_to_process:
         contents = read_file_contents(repo_path, file_path)
@@ -93,16 +94,21 @@ def process_repository(repo_path, ignore_list, output_stream, list_files=False):
             try:
                 file_tokens = tc.num_tokens_from_string(contents)
                 total_tokens += file_tokens
+                file_token_pairs.append((file_path, file_tokens, contents))
             except Exception as e:
                 print(f"Error counting tokens for {file_path}")
-                file_tokens = 0
+                file_token_pairs.append((file_path, 0, contents))
 
-            if list_files:
-                print(f"{file_path}: {file_tokens} tokens")
+    # Sort by token count in descending order
+    file_token_pairs.sort(key=lambda x: x[1], reverse=True)
 
-            output_stream.write("-" * 4 + "\n")
-            output_stream.write(f"{file_path}\n")
-            output_stream.write(f"{contents}\n")
+    for file_path, file_tokens, contents in file_token_pairs:
+        if list_files:
+            print(f"{file_path}: {file_tokens} tokens")
+
+        output_stream.write("-" * 4 + "\n")
+        output_stream.write(f"{file_path}\n")
+        output_stream.write(f"{contents}\n")
 
     return total_tokens
 
