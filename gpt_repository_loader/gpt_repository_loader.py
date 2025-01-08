@@ -24,7 +24,7 @@ def should_ignore(file_path, ignore_patterns):
             return True
     return False
 
-def get_ignore_list(repo_path, ignore_js_ts_config=True, additional_ignores=None):
+def get_ignore_list(repo_path, ignore_js_ts_config=True, additional_ignores=None, ignore_tests=False):
     ignore_list = []
     ignore_file_path = None
 
@@ -63,11 +63,13 @@ def get_ignore_list(repo_path, ignore_js_ts_config=True, additional_ignores=None
     env_ignore_list = ['**/.env', '**/.env.*']
     test_ignore_list = ['**/test', '**/tests', '**/__tests__', '**/__test__']
 
-    ignore_list += default_ignore_list + image_ignore_list + video_ignore_list + audio_ignore_list + font_ignore_list + build_ignore_list + egg_info_ignore_list + compiled_python_ignore_list + env_ignore_list + test_ignore_list + misc_ignore_list
-
+    ignore_list += default_ignore_list + image_ignore_list + video_ignore_list + audio_ignore_list + font_ignore_list + build_ignore_list + egg_info_ignore_list + compiled_python_ignore_list + env_ignore_list + misc_ignore_list
 
     if ignore_js_ts_config:
         ignore_list += js_ts_config_ignore_list
+
+    if ignore_tests:
+        ignore_list += test_ignore_list
 
     return ignore_list
 
@@ -111,9 +113,9 @@ def process_repository(repo_path, ignore_list, output_stream, list_files=False):
         for file_path, file_tokens, _ in file_token_pairs:
             wrapped_path = '\n'.join(textwrap.wrap(file_path, width=80))
             table_data.append([wrapped_path, file_tokens])
-        
+
         # Print formatted table
-        print(tabulate(table_data, 
+        print(tabulate(table_data,
                       headers=['File Path', 'Tokens'],
                       tablefmt='grid',
                       colalign=('left', 'right')))
@@ -153,9 +155,10 @@ def main():
     parser.add_argument("--include-js-ts-config", action="store_false", dest="ignore_js_ts_config", help="Include JavaScript and TypeScript config files.")
     parser.add_argument("-i", "--ignore", nargs="+", help="Additional file paths or patterns to ignore.")
     parser.add_argument("-l", "--list", action="store_true", help="List all files with their token counts.")
+    parser.add_argument("--ignore-tests", action="store_true", help="Ignore test files and directories.")
     args = parser.parse_args()
 
-    ignore_list = get_ignore_list(args.repo_path, args.ignore_js_ts_config, args.ignore)
+    ignore_list = get_ignore_list(args.repo_path, args.ignore_js_ts_config, args.ignore, args.ignore_tests)
     repo_as_text, total_tokens = git_repo_to_text(args.repo_path, args.preamble, ignore_list, args.list)
 
     if args.copy:
