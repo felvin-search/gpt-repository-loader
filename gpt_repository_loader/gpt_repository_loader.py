@@ -9,19 +9,81 @@ import subprocess
 import textwrap
 from token_count import TokenCount
 from tabulate import tabulate
+from .version import __version__
 tc = TokenCount(model_name="gpt-3.5-turbo")
 
 def should_ignore(file_path, ignore_patterns):
-    path_components = file_path.split(os.sep)
+    """
+    Check if a file should be ignored based on ignore patterns.
+    Handles glob patterns including **, *, directory-specific matches,
+    and ensures any files/subdirectories under an ignored directory are also ignored.
+
+    Args:
+        file_path (str): Path to the file to check
+        ignore_patterns (list): List of ignore patterns
+
+    Returns:
+        bool: True if file should be ignored, False otherwise
+    """
+    # Normalize path separators to forward slashes for consistent matching
+    file_path = file_path.replace(os.sep, '/')
+    file_path_parts = file_path.split('/')
 
     for pattern in ignore_patterns:
+        # First check if any parent directory of this file matches a directory pattern
+        # This ensures we ignore all contents of ignored directories
+        if not pattern.startswith('*'):  # Only do this for concrete directory patterns
+            pattern_no_wildcards = pattern.rstrip('/*')  # Remove trailing /* if present
+            pattern_parts = pattern_no_wildcards.split('/')
+
+            # Check if this pattern might be a directory pattern
+            if not any(part for part in pattern_parts if '*' in part):
+                # For each possible parent directory of the file
+                for i in range(len(file_path_parts)):
+                    parent_path = '/'.join(file_path_parts[:i])
+                    if parent_path == pattern_no_wildcards:
+                        return True
+        # Normalize pattern separators
+        pattern = pattern.replace(os.sep, '/')
+
+        # Convert glob patterns to regex patterns
         if pattern.startswith('**/'):
-            if fnmatch.fnmatch(file_path, pattern[3:]) or any(fnmatch.fnmatch(comp, pattern[3:]) for comp in path_components):
+            # **/ at start means match this pattern at any directory level
+            if fnmatch.fnmatch(file_path, pattern[3:]) or fnmatch.fnmatch(file_path, f"*/{pattern[3:]}"):
                 return True
-        elif fnmatch.fnmatch(file_path, pattern):
-            return True
-        elif fnmatch.fnmatch(os.path.basename(file_path), pattern):
-            return True
+        elif pattern.endswith('/**'):
+            # /** at end means match anything under this directory
+            dir_path = pattern[:-3]
+            if file_path.startswith(dir_path):
+                return True
+        elif '**' in pattern:
+            # Handle ** in middle of pattern
+            parts = pattern.split('**')
+            if len(parts) == 2:
+                start, end = parts
+                if file_path.startswith(start) and file_path.endswith(end):
+                    return True
+        elif pattern.startswith('*/'):
+            # */ at start means match in any immediate subdirectory
+            if fnmatch.fnmatch(file_path, pattern[2:]) or fnmatch.fnmatch(file_path, pattern):
+                return True
+        elif pattern.endswith('/*'):
+            # /* at end means match anything in that directory
+            dir_path = pattern[:-2]
+            parent_dir = os.path.dirname(file_path)
+            if parent_dir == dir_path or file_path.startswith(f"{dir_path}/"):
+                return True
+        else:
+            # Handle basic glob patterns
+            if fnmatch.fnmatch(file_path, pattern):
+                return True
+            # Also match against basename as fallback
+            if fnmatch.fnmatch(os.path.basename(file_path), pattern):
+                return True
+            # Handle directory-specific matches
+            if '/' in pattern and fnmatch.fnmatch(file_path, f"*/{pattern}"):
+                return True
+
     return False
 
 def get_ignore_list(repo_path, ignore_js_ts_config=True, additional_ignores=None, ignore_tests=False):
@@ -149,14 +211,19 @@ def git_repo_to_text(repo_path, preamble_file=None, ignore_list=None, list_files
 
 def main():
     parser = argparse.ArgumentParser(description="Convert a Git repository to text.")
-    parser.add_argument("repo_path", help="Path to the Git repository.")
+    parser.add_argument("repo_path", nargs='?', help="Path to the Git repository.")
     parser.add_argument("-p", "--preamble", help="Path to a preamble file.")
     parser.add_argument("-c", "--copy", action="store_true", help="Copy the repository contents to clipboard.")
     parser.add_argument("--include-js-ts-config", action="store_false", dest="ignore_js_ts_config", help="Include JavaScript and TypeScript config files.")
     parser.add_argument("-i", "--ignore", nargs="+", help="Additional file paths or patterns to ignore.")
     parser.add_argument("-l", "--list", action="store_true", help="List all files with their token counts.")
     parser.add_argument("--ignore-tests", action="store_true", help="Ignore test files and directories.")
+    parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
     args = parser.parse_args()
+
+    if not args.repo_path:
+        parser.print_help()
+        return
 
     ignore_list = get_ignore_list(args.repo_path, args.ignore_js_ts_config, args.ignore, args.ignore_tests)
     repo_as_text, total_tokens = git_repo_to_text(args.repo_path, args.preamble, ignore_list, args.list)

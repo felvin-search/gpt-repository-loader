@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 
 from setuptools import setup, find_packages
+from gpt_repository_loader.version import __version__
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+print("version:: ", __version__)
+
 setup(
     name="gpt-repository-loader",
-    version="0.9.16",
+    version=__version__,  # Use version from version.py or fallback
     author="Felvin",
     author_email="team@felvin.com",
     description="A utility to convert a Git repository into a text representation.",
