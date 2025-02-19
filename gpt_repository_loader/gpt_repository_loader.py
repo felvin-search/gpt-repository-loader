@@ -125,7 +125,9 @@ def get_ignore_list(repo_path, ignore_js_ts_config=True, additional_ignores=None
     env_ignore_list = ['**/.env', '**/.env.*']
     test_ignore_list = ['**/test', '**/tests', '**/__tests__', '**/__test__']
 
-    ignore_list += default_ignore_list + image_ignore_list + video_ignore_list + audio_ignore_list + font_ignore_list + build_ignore_list + egg_info_ignore_list + compiled_python_ignore_list + env_ignore_list + misc_ignore_list
+    binary_ignore_list = ['*.jar', '*.war', '*.class', '*.exe', '*.dll', '*.so', '*.dylib']
+
+    ignore_list += default_ignore_list + image_ignore_list + video_ignore_list + audio_ignore_list + font_ignore_list + binary_ignore_list + build_ignore_list + egg_info_ignore_list + compiled_python_ignore_list + env_ignore_list + misc_ignore_list
 
     if ignore_js_ts_config:
         ignore_list += js_ts_config_ignore_list
@@ -165,9 +167,6 @@ def process_repository(repo_path, ignore_list, output_stream, list_files=False):
             except Exception as e:
                 print(f"Error counting tokens for {file_path}")
                 file_token_pairs.append((file_path, 0, contents))
-
-    # Sort by token count in descending order
-    file_token_pairs.sort(key=lambda x: x[1], reverse=True)
 
     if list_files:
         # Prepare table data with wrapped paths
