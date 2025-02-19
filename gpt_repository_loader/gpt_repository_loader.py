@@ -217,6 +217,8 @@ def main():
     parser.add_argument("-i", "--ignore", nargs="+", help="Additional file paths or patterns to ignore.")
     parser.add_argument("-l", "--list", action="store_true", help="List all files with their token counts.")
     parser.add_argument("--ignore-tests", action="store_true", help="Ignore test files and directories.")
+    parser.add_argument("--filter-content", action="store_true", help="Use LLM to filter irrelevant content.")
+    parser.add_argument("--model-path", help="Path to the LLM model file for content filtering.")
     parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
     args = parser.parse_args()
 
@@ -225,7 +227,14 @@ def main():
         return
 
     ignore_list = get_ignore_list(args.repo_path, args.ignore_js_ts_config, args.ignore, args.ignore_tests)
-    repo_as_text, total_tokens = git_repo_to_text(args.repo_path, args.preamble, ignore_list, args.list)
+    repo_as_text, total_tokens = git_repo_to_text(
+        args.repo_path, 
+        args.preamble, 
+        ignore_list, 
+        args.list,
+        args.filter_content,
+        args.model_path
+    )
 
     if args.copy:
         pyperclip.copy(repo_as_text)
