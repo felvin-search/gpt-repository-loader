@@ -25,6 +25,9 @@ This will copy ALL the git tracked content in the repository on clipboard and th
 * `-i`, `--ignore`: Additional file paths or patterns to ignore. You can specify multiple paths or patterns.
 * `--include-js-ts-config`: Include JavaScript and TypeScript config files (which are ignored by default).
 * `-l`, `--list`: List all files with their token counts.
+* `--filter-content`: Use a lightweight LLM to filter out irrelevant content (requires a local LLM model).
+* `--model-path`: Path to the LLM model file for content filtering (optional, defaults to LLAMA_MODEL_PATH environment variable).
+* `--ignore-tests`: Ignore test files and directories.
 
 ### Examples
 ```bash
@@ -36,11 +39,29 @@ gpt-repository-loader . --include-js-ts-config -i "node_modules/"
 
 # List all files with their token counts
 gpt-repository-loader . -l
+
+# Use content filtering with a local LLM model
+gpt-repository-loader . -c --filter-content --model-path /path/to/llama-model.bin
+
+# Use content filtering with default model path (set via environment variable)
+export LLAMA_MODEL_PATH=/path/to/llama-model.bin
+gpt-repository-loader . -c --filter-content
 ```
+
+### Content Filtering
+The `--filter-content` option uses a lightweight local LLM to analyze file contents and filter out irrelevant files such as:
+- Build artifacts
+- Generated code
+- Cache files
+- Temporary data
+- Binary files
+
+This helps reduce token usage and improve context relevance when working with large repositories. The filtering process requires a local LLM model (compatible with llama.cpp). You can specify the model path using the `--model-path` option or set it via the `LLAMA_MODEL_PATH` environment variable.
 
 ## What to use it for?
 - Build a README for codebases
 - Work with Legacy code
 - Debug issues
+- Analyze large repositories efficiently with content filtering
 
 Gemini's 1M context window is REALLLY big, and it under utilized.
