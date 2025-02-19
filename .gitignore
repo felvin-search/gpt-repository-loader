@@ -30,3 +30,18 @@ venv/
 *~
 .aider*
 .env
+
+# Binary files
+*.jar
+*.war
+*.ear
+*.class
+*.exe
+*.dll
+*.so
+*.dylib
+*.bin
+*.dat
+*.zip
+*.tar.gz
+*.rar
