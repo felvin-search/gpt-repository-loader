@@ -9,8 +9,46 @@ import subprocess
 import textwrap
 from token_count import TokenCount
 from tabulate import tabulate
+from llama_cpp import Llama
 from .version import __version__
+
 tc = TokenCount(model_name="gpt-3.5-turbo")
+
+class ContentFilter:
+    def __init__(self, model_path=None):
+        if model_path is None:
+            model_path = os.getenv('LLAMA_MODEL_PATH', 'ggml-model-q4_0.bin')
+        
+        self.llm = Llama(
+            model_path=model_path,
+            n_ctx=512,
+            n_threads=4
+        )
+    
+    def is_relevant(self, content, file_path):
+        prompt = f"""Analyze this file content and determine if it's relevant for code context. 
+File: {file_path}
+First 500 chars of content: {content[:500]}
+
+Answer only 'yes' or 'no'. Consider:
+1. Is this a configuration, build, or documentation file?
+2. Does it contain meaningful code or important project context?
+3. Is it auto-generated or contains mostly boilerplate?
+Answer: """
+        
+        try:
+            response = self.llm(
+                prompt,
+                max_tokens=4,
+                temperature=0,
+                stop=["\n"],
+                echo=False
+            )
+            result = response['choices'][0]['text'].strip().lower()
+            return result == 'yes'
+        except Exception as e:
+            print(f"Warning: Error during content filtering for {file_path}: {str(e)}")
+            return True
 
 def should_ignore(file_path, ignore_patterns):
     """
@@ -152,15 +190,28 @@ def read_file_contents(repo_path, file_path):
         print(f"Error reading file {file_path}: {str(e)}")
     return None
 
-def process_repository(repo_path, ignore_list, output_stream, list_files=False):
+def process_repository(repo_path, ignore_list, output_stream, list_files=False, filter_content=True):
     files_to_process = get_files_to_process(repo_path, ignore_list)
     total_tokens = 0
     file_token_pairs = []
+    
+    content_filter = None
+    if filter_content:
+        try:
+            content_filter = ContentFilter()
+        except Exception as e:
+            print(f"Warning: Could not initialize content filter: {str(e)}")
+            print("Proceeding without content filtering...")
 
     for file_path in files_to_process:
         contents = read_file_contents(repo_path, file_path)
         if contents is not None:
             try:
+                # Apply content filtering if enabled and available
+                if filter_content and content_filter and not content_filter.is_relevant(contents, file_path):
+                    print(f"Skipping {file_path} (filtered as not relevant)")
+                    continue
+                
                 file_tokens = tc.num_tokens_from_string(contents)
                 total_tokens += file_tokens
                 file_token_pairs.append((file_path, file_tokens, contents))
@@ -169,13 +220,11 @@ def process_repository(repo_path, ignore_list, output_stream, list_files=False):
                 file_token_pairs.append((file_path, 0, contents))
 
     if list_files:
-        # Prepare table data with wrapped paths
         table_data = []
         for file_path, file_tokens, _ in file_token_pairs:
             wrapped_path = '\n'.join(textwrap.wrap(file_path, width=80))
             table_data.append([wrapped_path, file_tokens])
 
-        # Print formatted table
         print(tabulate(table_data,
                       headers=['File Path', 'Tokens'],
                       tablefmt='grid',
@@ -189,7 +238,7 @@ def process_repository(repo_path, ignore_list, output_stream, list_files=False):
 
     return total_tokens
 
-def git_repo_to_text(repo_path, preamble_file=None, ignore_list=None, list_files=False):
+def git_repo_to_text(repo_path, preamble_file=None, ignore_list=None, list_files=False, filter_content=True):
     if ignore_list is None:
         ignore_list = get_ignore_list(repo_path)
 
@@ -202,8 +251,7 @@ def git_repo_to_text(repo_path, preamble_file=None, ignore_list=None, list_files
     else:
         output_stream.write("The following text is a Git repository with code. The structure of the text are sections that begin with ----, followed by a single line containing the file path and file name, followed by a variable amount of lines containing the file contents. The text representing the Git repository ends when the symbols --END-- are encounted. Any further text beyond --END-- are meant to be interpreted as instructions using the aforementioned Git repository as context.\n")
 
-    total_tokens = process_repository(repo_path, ignore_list, output_stream, list_files)
-
+    total_tokens = process_repository(repo_path, ignore_list, output_stream, list_files, filter_content)
     output_stream.write("--END--")
 
     return output_stream.getvalue(), total_tokens
@@ -218,14 +266,27 @@ def main():
     parser.add_argument("-l", "--list", action="store_true", help="List all files with their token counts.")
     parser.add_argument("--ignore-tests", action="store_true", help="Ignore test files and directories.")
     parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
+    parser.add_argument("--no-filter", action="store_false", dest="filter_content", 
+                      help="Disable content filtering using LLM")
+    parser.add_argument("--model-path", help="Path to the Llama model file")
     args = parser.parse_args()
 
     if not args.repo_path:
         parser.print_help()
         return
 
+    # Set model path in environment if provided
+    if args.model_path:
+        os.environ['LLAMA_MODEL_PATH'] = args.model_path
+
     ignore_list = get_ignore_list(args.repo_path, args.ignore_js_ts_config, args.ignore, args.ignore_tests)
-    repo_as_text, total_tokens = git_repo_to_text(args.repo_path, args.preamble, ignore_list, args.list)
+    repo_as_text, total_tokens = git_repo_to_text(
+        args.repo_path, 
+        args.preamble, 
+        ignore_list, 
+        args.list,
+        args.filter_content
+    )
 
     if args.copy:
         pyperclip.copy(repo_as_text)
