@@ -1,2 +1,5 @@
 pyperclip
 token_count
+sentence-transformers
+tabulate
+numpy

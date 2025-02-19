@@ -10,6 +10,8 @@ import textwrap
 from token_count import TokenCount
 from tabulate import tabulate
 from .version import __version__
+from .content_filter import ContentFilter
+
 tc = TokenCount(model_name="gpt-3.5-turbo")
 
 def should_ignore(file_path, ignore_patterns):
@@ -152,14 +154,20 @@ def read_file_contents(repo_path, file_path):
         print(f"Error reading file {file_path}: {str(e)}")
     return None
 
-def process_repository(repo_path, ignore_list, output_stream, list_files=False):
+def process_repository(repo_path, ignore_list, output_stream, query=None, list_files=False):
     files_to_process = get_files_to_process(repo_path, ignore_list)
     total_tokens = 0
     file_token_pairs = []
+    content_filter = ContentFilter() if query else None
 
     for file_path in files_to_process:
         contents = read_file_contents(repo_path, file_path)
         if contents is not None:
+            # Apply content filtering if query is provided
+            if query and content_filter:
+                if not content_filter.is_relevant(contents, query):
+                    continue
+                    
             try:
                 file_tokens = tc.num_tokens_from_string(contents)
                 total_tokens += file_tokens
@@ -202,7 +210,7 @@ def git_repo_to_text(repo_path, preamble_file=None, ignore_list=None, list_files
     else:
         output_stream.write("The following text is a Git repository with code. The structure of the text are sections that begin with ----, followed by a single line containing the file path and file name, followed by a variable amount of lines containing the file contents. The text representing the Git repository ends when the symbols --END-- are encounted. Any further text beyond --END-- are meant to be interpreted as instructions using the aforementioned Git repository as context.\n")
 
-    total_tokens = process_repository(repo_path, ignore_list, output_stream, list_files)
+    total_tokens = process_repository(repo_path, ignore_list, output_stream, query, list_files)
 
     output_stream.write("--END--")
 
@@ -217,6 +225,7 @@ def main():
     parser.add_argument("-i", "--ignore", nargs="+", help="Additional file paths or patterns to ignore.")
     parser.add_argument("-l", "--list", action="store_true", help="List all files with their token counts.")
     parser.add_argument("--ignore-tests", action="store_true", help="Ignore test files and directories.")
+    parser.add_argument("-q", "--query", help="Query or context to filter relevant content using a lightweight LLM.")
     parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
     args = parser.parse_args()
 
@@ -225,15 +234,19 @@ def main():
         return
 
     ignore_list = get_ignore_list(args.repo_path, args.ignore_js_ts_config, args.ignore, args.ignore_tests)
-    repo_as_text, total_tokens = git_repo_to_text(args.repo_path, args.preamble, ignore_list, args.list)
+    repo_as_text, total_tokens = git_repo_to_text(args.repo_path, args.preamble, ignore_list, args.query, args.list)
 
     if args.copy:
         pyperclip.copy(repo_as_text)
         print(f"Repository contents copied to clipboard. Number of GPT tokens: {total_tokens}")
+        if args.query:
+            print("Content has been filtered based on relevance to the provided query.")
     else:
         with open('output.txt', 'w') as output_file:
             output_file.write(repo_as_text)
         print(f"Repository contents written to output.txt. Number of GPT tokens: {total_tokens}")
+        if args.query:
+            print("Content has been filtered based on relevance to the provided query.")
 
 def print_directory_structure(repo_path, indent=0, max_depth=2, ignore_list=None):
     if ignore_list is None:

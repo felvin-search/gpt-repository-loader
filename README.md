@@ -25,6 +25,7 @@ This will copy ALL the git tracked content in the repository on clipboard and th
 * `-i`, `--ignore`: Additional file paths or patterns to ignore. You can specify multiple paths or patterns.
 * `--include-js-ts-config`: Include JavaScript and TypeScript config files (which are ignored by default).
 * `-l`, `--list`: List all files with their token counts.
+* `-q`, `--query`: Filter content based on relevance to a specific query using a lightweight LLM. Only includes files that are semantically related to the query.
 
 ### Examples
 ```bash
@@ -36,11 +37,26 @@ gpt-repository-loader . --include-js-ts-config -i "node_modules/"
 
 # List all files with their token counts
 gpt-repository-loader . -l
+
+# Filter content related to authentication
+gpt-repository-loader . -c -q "user authentication and login system"
+
+# Filter content related to database operations
+gpt-repository-loader . -q "database queries and models" -l
 ```
 
 ## What to use it for?
 - Build a README for codebases
 - Work with Legacy code
 - Debug issues
+- Focus on specific parts of the codebase using semantic filtering
+- Reduce token usage by filtering out irrelevant content
 
 Gemini's 1M context window is REALLLY big, and it under utilized.
+
+## Content Filtering
+The `-q` or `--query` flag enables intelligent content filtering using a lightweight LLM (MiniLM). This feature:
+- Analyzes file contents for semantic relevance to your query
+- Reduces token usage by excluding irrelevant files
+- Maintains small but important files regardless of content
+- Improves the quality of LLM responses by focusing on relevant code
